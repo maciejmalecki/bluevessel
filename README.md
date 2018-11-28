@@ -15,4 +15,3 @@ This intro is written with KickAssembler and can be compiled with KA version 5.0
 * https://github.com/c64lib/chipset
 * https://github.com/c64lib/text
 * https://github.com/c64lib/copper64
-* https://github.com/64bites/64spec
