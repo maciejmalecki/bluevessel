@@ -1,0 +1,14 @@
+language: asm
+sudo: false
+before_install:
+  - source <(curl -SLs https://raw.githubusercontent.com/c64lib/travis-ci/master/install.sh)
+script:
+  - cpm common https://github.com/c64lib/common/archive/master.tar.gz
+  - cpm chipset https://github.com/c64lib/chipset/archive/master.tar.gz 
+  - cpm text https://github.com/c64lib/text/archive/master.tar.gz 
+  - cpm copper64 https://github.com/c64lib/copper64/archive/master.tar.gz 
+  - kall .
+notifications:
+  email:
+    on_success: change
+    on_failure: change
