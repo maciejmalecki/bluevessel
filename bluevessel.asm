@@ -1,19 +1,19 @@
 /*
- * c64lib/copper64/examples/e06-scroll.asm
+ * BlueVessel one file demo.
  *
- * Demo program for copper64 routine.
+ * Author:    Maciej Malecki (npe)
  *
- * Author:    Maciej Malecki
  * License:   MIT
  * (c):       2018
- * GIT repo:  https://github.com/c64lib/copper64
+ * GIT repo:  https://github.com/maciejmalecki/bluevessel
  */
  
-// #define VISUAL_DEBUG
+//#define VISUAL_DEBUG
 #define IRQH_BG_RASTER_BAR
 #define IRQH_HSCROLL
 #define IRQH_JSR
 #define IRQH_HSCROLL_MAP
+#define IRQH_BORDER_BG_0_COL
 
 #import "chipset/mos6510.asm"
 #import "chipset/vic2.asm"
@@ -35,11 +35,20 @@
 .label CYCLE_CNTR = $0A
 
 // constants
+
+.label COLOR_1 = LIGHT_GREY
+.label COLOR_2 = LIGHT_BLUE
+.label COLOR_3 = BLUE
+.label COLOR_4 = WHITE
+
 .label SCREEN_PTR = 1024
 
 .label LOGO_POSITION = 4
 .label LOGO_LINE = LOGO_POSITION * 8 + $33 - 4
 .label TECH_TECH_WIDTH = 5*8
+.label COLOR_SWITCH_1 = LOGO_LINE + TECH_TECH_WIDTH + 16
+.label COLOR_SWITCH_2 = COLOR_SWITCH_1 + 6
+.label COLOR_SWITCH_3 = COLOR_SWITCH_2 + 26
 
 .label CREDITS_POSITION = 16
 .label CREDITS_COLOR_BARS_LINE = CREDITS_POSITION * 8 + $33 - 3
@@ -49,6 +58,8 @@
 .label SCROLL_COLOR_BARS_LINE = SCROLL_POSITION * 8 + $33 - 2
 .label SCROLL_HSCROLL_LINE_START = SCROLL_COLOR_BARS_LINE - 5 
 .label SCROLL_HSCROLL_LINE_END = SCROLL_HSCROLL_LINE_START + 10 + 8 
+
+.label COLOR_SWITCH_4 = 300
 
 
 .var music = LoadSid("Noisy_Pillars_tune_1.sid")
@@ -92,17 +103,12 @@ block:
 initScreen: 
   .namespace c64lib {
   
-    // set up colors
-    lda #BLACK
-    sta BORDER_COL
-    sta BG_COL_0
-    
     // clear screen
     pushParamW(SCREEN_PTR)
-    lda #($20 + 128)
+    lda #($20)
     jsr fillScreen
     pushParamW(COLOR_RAM)
-    lda #BLACK
+    lda #COLOR_4
     jsr fillScreen
     
     // tech tech logo
@@ -112,7 +118,7 @@ initScreen:
     
     pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION))
     ldx #(5*40)
-    lda #WHITE
+    lda #BLUE
     jsr fillMem
     
     // -- credits --
@@ -122,6 +128,11 @@ initScreen:
     pushParamW(creditsText2)
     pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION + 2))
     jsr outText
+
+    pushParamW(COLOR_RAM + getTextOffset(0, CREDITS_POSITION))
+    ldx #(3*40)
+    lda #COLOR_3
+    jsr fillMem
     
     // -- scroll --
        
@@ -129,6 +140,16 @@ initScreen:
     lda CONTROL_2
     and #neg(CONTROL_2_CSEL)
     sta CONTROL_2
+    
+    pushParamW(COLOR_RAM + getTextOffset(0, SCROLL_POSITION))
+    ldx #(1*40)
+    lda #COLOR_3
+    jsr fillMem
+    
+    pushParamW(SCREEN_PTR + getTextOffset(0, SCROLL_POSITION))
+    ldx #(1*40)
+    lda #($20+128)
+    jsr fillMem
     
     rts
   }
@@ -225,6 +246,9 @@ copperList:
   copperEntry(0, c64lib.IRQH_JSR, <doScroll, >doScroll)
   copperEntry(25, c64lib.IRQH_JSR, <doColorCycle, >doColorCycle)
   copperEntry(LOGO_LINE, c64lib.IRQH_HSCROLL_MAP, <hscrollMapDef, >hscrollMapDef)
+  copperEntry(COLOR_SWITCH_1, c64lib.IRQH_BORDER_BG_0_COL, COLOR_1, 0)
+  copperEntry(COLOR_SWITCH_2, c64lib.IRQH_BORDER_BG_0_COL, COLOR_2, 0)
+  copperEntry(COLOR_SWITCH_3, c64lib.IRQH_BORDER_BG_0_COL, COLOR_3, 0)
   copperEntry(CREDITS_COLOR_BARS_LINE, c64lib.IRQH_BG_RASTER_BAR, <colorCycleDef, >colorCycleDef)
   copperEntry(CREDITS_COLOR_BARS_LINE + 16, c64lib.IRQH_BG_RASTER_BAR, <colorCycleDef, >colorCycleDef)
   hscroll: copperEntry(SCROLL_HSCROLL_LINE_START, c64lib.IRQH_HSCROLL, 5, 0)
@@ -232,6 +256,7 @@ copperList:
   copperEntry(SCROLL_HSCROLL_LINE_END, c64lib.IRQH_HSCROLL, 0, 0)
 
   copperEntry(257, c64lib.IRQH_JSR, <playMusic, >playMusic)
+  copperEntry(COLOR_SWITCH_4, c64lib.IRQH_BORDER_BG_0_COL, COLOR_4, 0)
   copperLoop()
 
 // library hosted functions
@@ -257,16 +282,16 @@ scrollText:     incText(
                     +"https://github.com/c64lib     that's all for now, i don't have any more ideas for this text.                 ", 
                     128) 
                 .byte $ff
-creditsText1:   incText("          code by  maciek malecki", 128); .byte $ff
-creditsText2:   incText("         music by  jeroen tel", 128); .byte $ff                
+creditsText1:   incText("         coded by  herr architekt      ", 128); .byte $ff
+creditsText2:   incText("         music by  jeroen tel          ", 128); .byte $ff                
 logoLine1:      .text " ---===--- ---===--- ---===--- ---===-  "
                 .text " ccc 666 4 4 l   i bbb ddd eee mmm ooo  "
                 .text " c   6 6 444 l   i b b d d e   m m o o  "
                 .text " ccc 666   4 lll i bbb ddd eee m m ooo  "
                 .text " -===--- ---===--- ---===--- ---===---  "; .byte $ff            
 scrollPtr:      .word scrollText
-scrollBarDef:   .byte GREY, LIGHT_GREY, WHITE, WHITE, LIGHT_GREY, GREY, GREY, BLACK, $ff
-colorCycleDef:  .byte BLACK, RED, RED, BROWN, RED, LIGHT_RED, YELLOW, WHITE, BLACK, $ff
+scrollBarDef:   .byte GREY, LIGHT_GREY, WHITE, WHITE, LIGHT_GREY, GREY, GREY, COLOR_3, $ff
+colorCycleDef:  .byte COLOR_3, LIGHT_RED, RED, LIGHT_RED, YELLOW, WHITE, YELLOW, YELLOW, COLOR_3, $ff
 hscrollMapDef:  .fill TECH_TECH_WIDTH, round(3.5 + 3.5*sin(toRadians(i*360/TECH_TECH_WIDTH))) ; .byte 0; .byte $ff
 endOfVars:
 
