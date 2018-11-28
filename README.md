@@ -10,7 +10,7 @@ This intro is released in form of PRG file that can be either launched using C64
 
 ## how to compile
 
-This intro is written with KickAssembler and can be compiled with KA version 5.0. It requires however few libraries to be checked out into libdir:
+This intro is written with KickAssembler and can be compiled with KA version 5.0. It requires, however, a few libraries to be checked out into libdir:
 * https://github.com/c64lib/common
 * https://github.com/c64lib/chipset
 * https://github.com/c64lib/text
