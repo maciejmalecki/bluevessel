@@ -43,23 +43,26 @@
 
 .label SCREEN_PTR = 1024
 
-.label LOGO_POSITION = 4
+.label LOGO_POSITION = 1
 .label LOGO_LINE = LOGO_POSITION * 8 + $33 - 4
-.label TECH_TECH_WIDTH = 5*8
-.label COLOR_SWITCH_1 = LOGO_LINE + TECH_TECH_WIDTH + 16
+.label TECH_TECH_WIDTH = 9*8
+.label COLOR_SWITCH_1 = LOGO_LINE + TECH_TECH_WIDTH + 15
 .label COLOR_SWITCH_2 = COLOR_SWITCH_1 + 6
-.label COLOR_SWITCH_3 = COLOR_SWITCH_2 + 26
+.label COLOR_SWITCH_3 = COLOR_SWITCH_2 + 16
 
-.label CREDITS_POSITION = 16
-.label CREDITS_COLOR_BARS_LINE = CREDITS_POSITION * 8 + $33 - 3
+.label CREDITS_POSITION = 17
+.label CREDITS_COLOR_BARS_LINE = CREDITS_POSITION * 8 + $33 - 4
 
-.label SCROLL_POSITION = 23
+.label SCROLL_POSITION = 22
 .label SCROLL_POSITION_OFFSET = SCROLL_POSITION * 40
 .label SCROLL_COLOR_BARS_LINE = SCROLL_POSITION * 8 + $33 - 2
 .label SCROLL_HSCROLL_LINE_START = SCROLL_COLOR_BARS_LINE - 5 
 .label SCROLL_HSCROLL_LINE_END = SCROLL_HSCROLL_LINE_START + 10 + 8 
 
 .label COLOR_SWITCH_4 = 300
+
+.label COPYRIGHT_COLOR = LIGHT_BLUE
+.label COPYRIGHT_POSITION = 24
 
 
 .var music = LoadSid("Noisy_Pillars_tune_1.sid")
@@ -112,16 +115,26 @@ initScreen:
     jsr fillScreen
     
     // tech tech logo
-    pushParamW(logoLine1)
+    pushParamW(vesselData1)
     pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION))
     jsr outText
+    pushParamW(vesselData2)
+    pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION + 5))
+    jsr outText
     
+    pushParamW(vesselColors1)
     pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION))
-    ldx #(5*40)
-    lda #BLUE
-    jsr fillMem
+    jsr outText
+    pushParamW(vesselColors2)
+    pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION + 5))
+    jsr outText
     
     // -- credits --
+    pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION - 1))
+    ldx #(3*40)
+    lda #($20+128)
+    jsr fillMem
+    
     pushParamW(creditsText1)
     pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION))
     jsr outText
@@ -129,8 +142,8 @@ initScreen:
     pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION + 2))
     jsr outText
 
-    pushParamW(COLOR_RAM + getTextOffset(0, CREDITS_POSITION))
-    ldx #(3*40)
+    pushParamW(COLOR_RAM + getTextOffset(0, CREDITS_POSITION - 1))
+    ldx #(4*40)
     lda #COLOR_3
     jsr fillMem
     
@@ -149,6 +162,16 @@ initScreen:
     pushParamW(SCREEN_PTR + getTextOffset(0, SCROLL_POSITION))
     ldx #(1*40)
     lda #($20+128)
+    jsr fillMem
+    
+    // -- copyright --
+    pushParamW(copyrightText)
+    pushParamW(SCREEN_PTR + getTextOffset(27, COPYRIGHT_POSITION))
+    jsr outText
+    
+    pushParamW(COLOR_RAM + getTextOffset(27, COPYRIGHT_POSITION))
+    ldx #12
+    lda #COPYRIGHT_COLOR
     jsr fillMem
     
     rts
@@ -244,7 +267,7 @@ endOfCode:
 .align $100
 copperList:
   copperEntry(0, c64lib.IRQH_JSR, <doScroll, >doScroll)
-  copperEntry(25, c64lib.IRQH_JSR, <doColorCycle, >doColorCycle)
+  copperEntry(24, c64lib.IRQH_JSR, <doColorCycle, >doColorCycle)
   copperEntry(LOGO_LINE, c64lib.IRQH_HSCROLL_MAP, <hscrollMapDef, >hscrollMapDef)
   copperEntry(COLOR_SWITCH_1, c64lib.IRQH_BORDER_BG_0_COL, COLOR_1, 0)
   copperEntry(COLOR_SWITCH_2, c64lib.IRQH_BORDER_BG_0_COL, COLOR_2, 0)
@@ -274,21 +297,47 @@ endOfLibs:
 
 // variables
 screenPtr:      .word SCREEN_PTR
+copyrightText: .text "(c) 2018 npe"; .byte $ff
 scrollText:     incText(
-                    "  3...      2...      1...      go!      "
-                    +"hi folks! this simple intro has been written to demonstrate capabilities of copper64 library "
-                    +"which is a part of c64lib project. there's little tech tech animation of ascii logo, some old shool "
-                    +"font effect and lame 1x1 scroll that you're reading right now. c64lib is freely available on "
-                    +"https://github.com/c64lib     that's all for now, i don't have any more ideas for this text.                 ", 
+                    "     hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine!      "
+                    +"that was of course a joke in a very bad taste, so now i will use more appropriate language ;-)     "
+                    +"more greetings to whole se team: julka, olga, bartek, krzysztof and wiktor (that was in genderized alphabetische reihenfolge)    "
+                    +"yea! joking again.       and of course jarek!    i've almost forgotten      shame on me            "
+                    +"i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " 
+                    +"it was mostly due to the fact, that i copied and pasted my example intro from copper64 and just made new logo plus added some color switches.          "
+                    +"big thanks to my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea)     "
+                    +" and to batman!            and to jeroen!            and to whole commodore 64 community!     "
+                    +"    and to jarek r.            "
+                    +"                           get source of this intro on github.com/maciejmalecki/bluevessel"
+                    +"                           access c64lib on github.com/c64lib"
+                    +"                           bye!                               ",
                     128) 
                 .byte $ff
 creditsText1:   incText("         coded by  herr architekt      ", 128); .byte $ff
 creditsText2:   incText("         music by  jeroen tel          ", 128); .byte $ff                
-logoLine1:      .text " ---===--- ---===--- ---===--- ---===-  "
-                .text " ccc 666 4 4 l   i bbb ddd eee mmm ooo  "
-                .text " c   6 6 444 l   i b b d d e   m m o o  "
-                .text " ccc 666   4 lll i bbb ddd eee m m ooo  "
-                .text " -===--- ---===--- ---===--- ---===---  "; .byte $ff            
+vesselData1:    .byte $20,$20,$55,$49,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$42,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
+                .byte $20,$20,$4A,$4B,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$43,$5B,$43,$20,$20,$20,$20,$20,$20,$20,$20,$20
+                .byte $20,$20,$50,$4F,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$42,$20,$76,$77,$77,$77,$77,$A0,$20,$20,$20
+                .byte $20,$20,$6A,$74,$20,$20,$20,$20,$20,$20,$66,$A0,$A0,$66,$66,$A0,$66,$A0,$A0,$A0,$20,$20,$20,$20,$20,$20,$20,$20,$20,$42,$20,$20,$61,$68,$66,$66,$A0,$20,$20,$20
+                .byte $20,$4D,$6A,$74,$4E,$20,$20,$20,$20,$A0,$A0,$A0,$66,$A0,$A0,$A0,$A0,$A0,$66,$A0,$A0,$66,$A0,$20,$20,$A0,$A0,$20,$20,$42,$20,$20,$61,$20,$5C,$5C,$A0,$20,$20,$20,$ff
+vesselData2:    .byte $20,$20,$50,$4F,$20,$20,$20,$20,$20,$A0,$66,$A0,$A0,$A0,$66,$A0,$A0,$A0,$A0,$66,$66,$A0,$A0,$20,$A0,$66,$A0,$A0,$66,$42,$20,$20,$61,$68,$68,$66,$A0,$20,$20,$20
+                .byte $20,$20,$7C,$7E,$20,$20,$20,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$F6,$20,$20
+                .byte $20,$20,$20,$20,$20,$20,$20,$F4,$A0,$82,$8C,$95,$85,$A0,$96,$85,$93,$93,$85,$8C,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$F6,$20,$20
+                .byte $20,$20,$20,$20,$20,$20,$20,$F5,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$75,$20,$20
+                .byte $20,$20,$20,$20,$20,$20,$20,$E1,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$A0,$74,$20,$20,$ff
+
+vesselColors1:  .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0B,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E
+                .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0B,$0B,$0B,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E
+                .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0B,$0E,$0F,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E
+                .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$07,$02,$0A,$08,$0F,$06,$0F,$0E,$06,$0F,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0B,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E
+                .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$02,$04,$03,$05,$0B,$04,$05,$04,$0B,$09,$0B,$03,$05,$03,$0E,$0E,$05,$04,$0E,$0E,$0B,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$ff
+vesselColors2:  .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0A,$07,$0A,$07,$06,$06,$0A,$07,$05,$0E,$0A,$0B,$06,$0A,$0E,$06,$08,$07,$06,$0B,$0B,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E,$0E
+                .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0F,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0B,$0B,$0E,$0E
+                .byte $0E,$0E,$0B,$0E,$0E,$0E,$0E,$0F,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0B,$0B,$0E,$0E
+                .byte $0E,$0E,$0B,$0E,$0E,$0E,$0E,$0F,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0B,$0B,$0E,$0E
+                .byte $0E,$0E,$0E,$0E,$0E,$0E,$0E,$0F,$0F,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0C,$0B,$0B,$0B,$0B,$0B,$0E,$0E,$ff
+
+
 scrollPtr:      .word scrollText
 scrollBarDef:   .byte GREY, LIGHT_GREY, WHITE, WHITE, LIGHT_GREY, GREY, GREY, COLOR_3, $ff
 colorCycleDef:  .byte COLOR_3, LIGHT_RED, RED, LIGHT_RED, YELLOW, WHITE, YELLOW, YELLOW, COLOR_3, $ff
