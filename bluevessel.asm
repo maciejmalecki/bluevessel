@@ -309,7 +309,7 @@ scrollText:     incText(
                     +"it was mostly due to the fact, that i copied and pasted my example intro from copper64 and just made new logo plus added some color switches.          "
                     +"big thanks to my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea)     "
                     +" and to batman!            and to jeroen!            and to whole commodore 64 community!     "
-                    +"    and to jarek r.            "
+                    +"    and to basia, jarek and helenka!!!            "
                     +"                           get source of this intro on github.com/maciejmalecki/bluevessel"
                     +"                           access c64lib on github.com/c64lib"
                     +"                           bye!                               ",
