@@ -281,8 +281,10 @@ copperList:
   copperEntry(257, c64lib.IRQH_JSR, <playMusic, >playMusic)
   copperEntry(COLOR_SWITCH_4, c64lib.IRQH_BORDER_BG_0_COL, COLOR_4, 0)
   copperLoop()
+endOfCopper:
 
 // library hosted functions
+beginOfLibs:
 startCopper:    .namespace c64lib { _startCopper(DISPLAY_LIST_PTR_LO, LIST_PTR) }
 outHex:         .namespace c64lib { _outHex() }
 outText:        .namespace c64lib { _outText() }
@@ -296,13 +298,13 @@ copyLargeMemForward:
 endOfLibs:
 
 // variables
-screenPtr:      .word SCREEN_PTR
+beginOfVars:
 copyrightText: .text "(c) 2018 npe"; .byte $ff
 scrollText:     incText(
                     "     hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine!      "
                     +"that was of course a joke in a very bad taste, so now i will use more appropriate language ;-)     "
-                    +"more greetings to whole se team: julka, olga, bartek, krzysztof and wiktor (that was in genderized alphabetische reihenfolge)    "
-                    +"yea! joking again.       and of course jarek!    i've almost forgotten      shame on me            "
+                    +"more greetings to whole se team: julka, olga, bartek, jarek, krzysztof and wiktor (that was in genderized alphabetische reihenfolge)    "
+                    +"yea! joking again.                   "
                     +"i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " 
                     +"it was mostly due to the fact, that i copied and pasted my example intro from copper64 and just made new logo plus added some color switches.          "
                     +"big thanks to my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea)     "
@@ -347,11 +349,21 @@ endOfVars:
 //*=music.location "Music"
 musicData:
 .fill music.size, music.getData(i)
+endOfMusic:
 
 endOfProg:
 
-.print "End of code = " + toHexString(endOfCode)
-.print "Copper list = " + toHexString(copperList)
-.print "Size of vars = " + (endOfVars - screenPtr)
-.print "Size of libs = " + (endOfLibs - startCopper)
-.print "Size of all = " + (endOfProg - start)
+.print "=== MEMORY MAP SUMMARY ==="
+.print " Begin of code     = $" + toHexString(start, 4)
+.print " End of code       = $" + toHexString(endOfCode, 4) + ", Size of code = " + (endOfCode - start)
+.print " Begin of libs     = $" + toHexString(beginOfLibs, 4)
+.print " End of libs       = $" + toHexString(endOfLibs, 4) + ", Size of libs = " + (endOfLibs - beginOfLibs)
+.print " Begin of copper   = $" + toHexString(copperList, 4)
+.print " End of copper     = $" + toHexString(endOfCopper, 4) + ", Size of copper list = " + (endOfCopper - copperList)
+.print " Begin of vars     = $" + toHexString(beginOfVars, 4)
+.print " End of vars       = $" + toHexString(endOfVars, 4) + ", Size of vars = " + (endOfVars - beginOfVars)
+.print " Begin of music    = $" + toHexString(musicData, 4)
+.print " End of music      = $" + toHexString(endOfMusic, 4) + ", Size of vars = " + (endOfMusic - musicData)
+
+.print " Size of all       = " + (endOfProg - start)
+.print "=========================="
