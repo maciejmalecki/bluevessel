@@ -14,8 +14,8 @@ notifications:
     on_failure: change
 deploy:
   provider: releases
-  file_glob: true
-  file: "*.prg"
+  file_glob: false
+  file: "bluevessel.prg"
   skip_cleanup: true
   on:
     repo: maciejmalecki/bluevessel
