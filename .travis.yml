@@ -12,3 +12,14 @@ notifications:
   email:
     on_success: change
     on_failure: change
+deploy:
+  provider: releases
+  file_glob: true
+  file: "*.prg"
+  skip_cleanup: true
+  on:
+    repo: maciejmalecki/bluevessel
+    tags: true
+    branch: release
+  api-key:
+    secure:
