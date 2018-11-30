@@ -15,9 +15,9 @@
 #define IRQH_HSCROLL_MAP
 #define IRQH_BORDER_BG_0_COL
 
-#import "chipset/mos6510.asm"
-#import "chipset/vic2.asm"
-#import "chipset/cia.asm"
+#import "chipset/lib/mos6510.asm"
+#import "chipset/lib/vic2.asm"
+#import "chipset/lib/cia.asm"
 #import "text/text.asm"
 #import "text/scroll1x1.asm"
 #import "common/lib/mem-global.asm"
