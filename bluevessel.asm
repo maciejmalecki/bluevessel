@@ -324,10 +324,11 @@ scrollText:     incText(
                     "and to whole commodore 64 community! " +
                     longPause() +
                     "i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " + 
-                    "it was mostly due to the fact, that i copied and pasted my example intro from copper64 and just made new logo plus added some color switches. " +
+                    "it was mostly due to the fact, that i copied & pasted my example intro from copper64 and just made new logo plus added some color switches. " +
                     longPause() +
-                    "get source of this intro on github.com/maciejmalecki/bluevessel " +
+                    "get source of this intro on github.com/maciejmalecki/bluevessel     " +
                     "access c64lib on github.com/c64lib " +
+                    pause() +
                     "bye! " +
                     longPause(),
                     128) 
