@@ -73,6 +73,15 @@ BasicUpstart(start) // Basic start routine
 // Main program
 *=$080d "Program"
 
+.function pause() {
+  .return "                    "
+}
+
+.function longPause() {
+  .return pause() + pause()
+}
+
+
 start:
   sei
   .namespace c64lib {
@@ -301,18 +310,26 @@ endOfLibs:
 beginOfVars:
 copyrightText: .text "(c) 2018 npe"; .byte $ff
 scrollText:     incText(
-                    "     hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine!      "
-                    +"that was of course a joke in a very bad taste, so now i will use more appropriate language ;-)     "
-                    +"more greetings to whole se team: julka, olga, bartek, jarek, krzysztof and wiktor (that was in genderized alphabetische reihenfolge)    "
-                    +"yea! joking again.                   "
-                    +"i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " 
-                    +"it was mostly due to the fact, that i copied and pasted my example intro from copper64 and just made new logo plus added some color switches.          "
-                    +"big thanks to my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea)     "
-                    +" and to batman!            and to jeroen!            and to whole commodore 64 community!     "
-                    +"    and to basia, jarek and helenka!!!            "
-                    +"                           get source of this intro on github.com/maciejmalecki/bluevessel"
-                    +"                           access c64lib on github.com/c64lib"
-                    +"                           bye!                               ",
+                    pause() +
+                    "hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine! " +
+                    pause() +
+                    "that was of course a joke in a very bad taste, so now i will use more appropriate language ;) " +
+                    longPause() +
+                    "more greetings to the whole team: julka, olga, bartek, jarek, krzysztof, pawel and wiktor " +
+                    "and my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea) " +
+                    pause() +
+                    "and to basia, jarek and helenka!!! " +
+                    pause() +
+                    "and to batman! and to jeroen! " + 
+                    "and to whole commodore 64 community! " +
+                    longPause() +
+                    "i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " + 
+                    "it was mostly due to the fact, that i copied and pasted my example intro from copper64 and just made new logo plus added some color switches. " +
+                    longPause() +
+                    "get source of this intro on github.com/maciejmalecki/bluevessel " +
+                    "access c64lib on github.com/c64lib " +
+                    "bye! " +
+                    longPause(),
                     128) 
                 .byte $ff
 creditsText1:   incText("         coded by  herr architekt      ", 128); .byte $ff
