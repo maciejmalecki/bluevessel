@@ -295,8 +295,8 @@ endOfCopper:
 // library hosted functions
 beginOfLibs:
 startCopper:    .namespace c64lib { _startCopper(DISPLAY_LIST_PTR_LO, LIST_PTR) }
-outHex:         .namespace c64lib { _outHex() }
-outText:        .namespace c64lib { _outText() }
+outText:         
+                #import "text/lib/sub/out-text.asm"
 scroll:         .namespace c64lib { _scroll1x1(SCROLL_TEMP) }
 fillMem:        .namespace c64lib { _fillMem() }
 rotateMemRight: 
