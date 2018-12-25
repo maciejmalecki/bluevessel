@@ -15,3 +15,8 @@ This intro is written with KickAssembler and can be compiled with KA version 5.0
 * https://github.com/c64lib/chipset
 * https://github.com/c64lib/text
 * https://github.com/c64lib/copper64
+
+Assuming that libraries are checked out on the same level as bluevessel repository, demo can be compiled in following way:
+```
+java -jar KickAss.jar -libdir ... bluevessel.asm
+```
