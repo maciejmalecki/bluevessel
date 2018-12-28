@@ -64,7 +64,7 @@
 .label COPYRIGHT_COLOR = LIGHT_BLUE
 .label COPYRIGHT_POSITION = 24
 
-
+// Jeroen Tel granted me a permission to use his tune in this intro. I'm a bad musician myself :-(
 .var music = LoadSid("Noisy_Pillars_tune_1.sid")
 
 *=$0801 "Basic Upstart"
@@ -73,6 +73,7 @@ BasicUpstart(start) // Basic start routine
 // Main program
 *=$080d "Program"
 
+// ----- helper macros -----
 .function pause() {
   .return "                    "
 }
@@ -81,11 +82,12 @@ BasicUpstart(start) // Basic start routine
   .return pause() + pause()
 }
 
-
+// execution starts here -->
 start:
+  // C64 God Mode:
   sei
   .namespace c64lib {
-    // reconfigure C64 memory
+    // reconfigure C64 memory, we want full ram without BASIC and KERNAL
     configureMemory(RAM_IO_RAM)
     // disable NMI interrupt in a lame way
     disableNMI()
@@ -94,28 +96,41 @@ start:
   }
   cli
   
-  jsr unpack
-  jsr initSound
-  jsr initScreen
-  jsr initCopper
-  jsr initScroll
-
   // initialize internal data structures  
   lda #00
   sta ANIMATION_IDX
   sta BAR_DEFS_IDX
   sta CYCLE_CNTR
+  sta SCROLL_OFFSET
 
-  // initialize copper64 routine
+  // initialization routines
+  jsr unpack
+  jsr initSound
+  jsr initScreen
+  jsr initCopper
+
+  // initialize and install copper64 IRQ routine
   jsr startCopper
 block:
-  // go to infinite loop, rest will be done in interrupts
+  // go to infinite loop, the rest will be done in interrupts
   jmp block
   
+
+// ----- initalization routines ------
+
+// Does relocation of code into target position (music data & player).
+unpack: {
+  pushParamW(musicData)
+  pushParamW(music.location)
+  pushParamW(music.size)
+  jsr copyLargeMemForward
+  rts
+}
+// Intro screen set up.
 initScreen: 
   .namespace c64lib {
   
-    // clear screen
+    // -- clear screen --
     pushParamW(SCREEN_PTR)
     lda #($20)
     jsr fillScreen
@@ -123,7 +138,7 @@ initScreen:
     lda #COLOR_4
     jsr fillScreen
     
-    // tech tech logo
+    // -- tech tech logo --
     pushParamW(vesselData1)
     pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION))
     jsr outText
@@ -186,7 +201,8 @@ initScreen:
     rts
   }
 
-  
+
+// Intialize "copper" list.
 initCopper: {
   // set up address of display list
   lda #<copperList
@@ -196,19 +212,7 @@ initCopper: {
   rts
 }
 
-initScroll: {
-  lda #$00
-  sta SCROLL_OFFSET
-  rts  
-}
-  
-playMusic: {
-  debugBorderStart()
-  jsr music.play
-  debugBorderEnd()
-  rts
-}
-
+// Initialize music player.
 initSound: {
   ldx #0
   ldy #0
@@ -217,6 +221,18 @@ initSound: {
   rts
 }
 
+
+// ----- custom IRQ handlers -----
+
+// Music player step to be executed at given free raster line.
+playMusic: {
+  debugBorderStart()
+  jsr music.play
+  debugBorderEnd()
+  rts
+}
+
+// Handles scroll to be executed at given free raster line.
 doScroll: {
   debugBorderStart()
   lda SCROLL_OFFSET
@@ -240,7 +256,7 @@ fineScroll:
   rts
 }
 
-doColorCycle: {
+doCycleAndTechTech: {
   debugBorderStart()
   
   // tech tech
@@ -264,45 +280,45 @@ doCycle:
   debugBorderEnd()
   rts
 }
-unpack: {
-  pushParamW(musicData)
-  pushParamW(music.location)
-  pushParamW(music.size)
-  jsr copyLargeMemForward
-  rts
-}
 endOfCode:
 
+// ----- "copper" list, here we define which effects should be executed at which raster line  ------
+// ----- or, we also call custom IRQ handlers here such as doScroll, doCycleAndTechTech, etc. ------
 .align $100
 copperList:
-  copperEntry(0, c64lib.IRQH_JSR, <doScroll, >doScroll)
-  copperEntry(24, c64lib.IRQH_JSR, <doColorCycle, >doColorCycle)
-  copperEntry(LOGO_LINE, c64lib.IRQH_HSCROLL_MAP, <hscrollMapDef, >hscrollMapDef)
-  copperEntry(COLOR_SWITCH_1, c64lib.IRQH_BORDER_BG_0_COL, COLOR_1, 0)
-  copperEntry(COLOR_SWITCH_2, c64lib.IRQH_BORDER_BG_0_COL, COLOR_2, 0)
-  copperEntry(COLOR_SWITCH_3, c64lib.IRQH_BORDER_BG_0_COL, COLOR_3, 0)
-  copperEntry(CREDITS_COLOR_BARS_LINE, c64lib.IRQH_BG_RASTER_BAR, <colorCycleDef, >colorCycleDef)
-  copperEntry(CREDITS_COLOR_BARS_LINE + 16, c64lib.IRQH_BG_RASTER_BAR, <colorCycleDef, >colorCycleDef)
-  hscroll: copperEntry(SCROLL_HSCROLL_LINE_START, c64lib.IRQH_HSCROLL, 5, 0)
-  copperEntry(SCROLL_COLOR_BARS_LINE, c64lib.IRQH_BG_RASTER_BAR, <scrollBarDef, >scrollBarDef)
-  copperEntry(SCROLL_HSCROLL_LINE_END, c64lib.IRQH_HSCROLL, 0, 0)
-
-  copperEntry(257, c64lib.IRQH_JSR, <playMusic, >playMusic)
-  copperEntry(COLOR_SWITCH_4, c64lib.IRQH_BORDER_BG_0_COL, COLOR_4, 0)
-  copperLoop()
+            copperEntry(0,                            c64lib.IRQH_JSR,              <doScroll, >doScroll)
+            copperEntry(24,                           c64lib.IRQH_JSR,              <doCycleAndTechTech, >doCycleAndTechTech)
+            copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
+            copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
+            copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
+            copperEntry(COLOR_SWITCH_3,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_3, 0)
+            copperEntry(CREDITS_COLOR_BARS_LINE,      c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
+            copperEntry(CREDITS_COLOR_BARS_LINE + 16, c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
+  hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
+            copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
+            copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
+            copperEntry(257,                          c64lib.IRQH_JSR,              <playMusic, >playMusic)
+            copperEntry(COLOR_SWITCH_4,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperLoop()
 endOfCopper:
 
-// library hosted functions
+// ----- library hosted functions (here we execute macros that "install" subroutine or just import their code there) -----
 beginOfLibs:
-startCopper:    .namespace c64lib { _startCopper(DISPLAY_LIST_PTR_LO, LIST_PTR) }
-outText:         
+
+  // here we configure subroutines that requies zero page location, calling KA macros configure and install them
+  startCopper:    .namespace c64lib { _startCopper(DISPLAY_LIST_PTR_LO, LIST_PTR) }
+  scroll:         .namespace c64lib { _scroll1x1(SCROLL_TEMP) }
+
+  // here we just import code of subroutines which do not require any further configuration
+  outText:         
                 #import "text/lib/sub/out-text.asm"
-scroll:         .namespace c64lib { _scroll1x1(SCROLL_TEMP) }
-fillMem:        .namespace c64lib { _fillMem() }
-rotateMemRight: 
+  fillMem:
+                #import "common/lib/sub/fill-mem.asm"
+  rotateMemRight: 
                 #import "common/lib/sub/rotate-mem-right.asm"
-fillScreen:     .namespace c64lib { _fillScreen() }
-copyLargeMemForward: 
+  fillScreen:
+                #import "common/lib/sub/fill-screen.asm"
+  copyLargeMemForward: 
                 #import "common/lib/sub/copy-large-mem-forward.asm"
 endOfLibs:
 
@@ -313,18 +329,19 @@ scrollText:     incText(
                     pause() +
                     "hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine! " +
                     pause() +
-                    "that was of course a joke in a very bad taste, so now i will use more appropriate language ;) " +
+                    "that was of course a joke in a very bad taste, so now i will use less cryptic language ;) " +
                     longPause() +
                     "more greetings to the whole team: julka, olga, bartek, jarek, krzysztof, pawel and wiktor " +
                     "and my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea) " +
                     pause() +
-                    "and to basia, jarek and helenka!!! " +
+                    "and to: basia, jarek and helenka!!! " +
                     pause() +
-                    "and to batman! and to jeroen! " + 
-                    "and to whole commodore 64 community! " +
+                    "batman! and jeroen!     " + 
+                    "and whole commodore 64 community! including commodore 64 & 128 fb group" +
                     longPause() +
                     "i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " + 
                     "it was mostly due to the fact, that i copied & pasted my example intro from copper64 and just made new logo plus added some color switches. " +
+                    "whole intro and libraries are coded in kickassembler (thanks mads!) " +
                     longPause() +
                     "get source of this intro on github.com/maciejmalecki/bluevessel     " +
                     "access c64lib on github.com/c64lib " +
@@ -364,7 +381,6 @@ colorCycleDef:  .byte COLOR_3, LIGHT_RED, RED, LIGHT_RED, YELLOW, WHITE, YELLOW,
 hscrollMapDef:  .fill TECH_TECH_WIDTH, round(3.5 + 3.5*sin(toRadians(i*360/TECH_TECH_WIDTH))) ; .byte 0; .byte $ff
 endOfVars:
 
-//*=music.location "Music"
 musicData:
 .fill music.size, music.getData(i)
 endOfMusic:
