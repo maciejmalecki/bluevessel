@@ -58,3 +58,17 @@ copperList:
   (14)      copperLoop()
 endOfCopper:
 ```
+
+First two effects are in fact invisible at the place of installation: (1) at raster 0 and (2) at raster 24 just executes code of the text scrool (that goes in the bottom of the screen) and does color and H-SCROLL rotating logic for font effects and tech tech. These two handlers were installed there just because it is a free place on the screen where no other visual effects are displayed and this code must go in sync with the screen, because we will get some ugly visual artefacts otherwise.
+
+At position (3) we install tech-tech effect which is in fact a H-SCROLL register map which is then rotated at (2). This gives wavy effect of tech-tech.
+
+Then, at positions (4), (5) and (6) we change screen colors. Here we use IRQH_BORDER_BG_0_COL handler which is carefully cycled so that it looks that we don't have a border at all (I know, a bit lame...)
+
+At positions (7) and (8) we use raster bar for the first time. Color map for this bar is additionally cycled at step (2) which gives nice intro-like font effect. The whole mystery is to print text using reverse mode and use BG_0 register for color cycling.
+
+Then there is a very lame scroll procedure with starts with H-SCROLL initialization at step (9), then another, this time static raster bar at step (10) for another font color and then H-SCROLL restore at step (11). Note label `hscroll:` in step (9) - it will be used to modify handler parameter (see value `5` just after `c64lib.IRQH_HSCROLL`). The modification is performed in step (1).
+
+We then play music at step (12) and yet another time switch background color (13) so that we have upper screen white and lower screen blue.
+
+There are still plenty of work on https://github.com/c64lib/copper64 and I cannot guarantee its API stability but there are a bit more handlers already available. Go there and see if you're interested.
