@@ -331,13 +331,13 @@ scrollText:     incText(
                     pause() +
                     "that was of course a joke in a very bad taste, so now i will use less cryptic language ;) " +
                     longPause() +
-                    "more greetings to the whole team: julka, olga, bartek, jarek, krzysztof, pawel and wiktor " +
+                    "more greetings to the whole team: julka, olga, bartek, jarek, pawel and wiktor " +
                     "and my girls: ania, ola and zuza. and to my old team, who actually gave me first c64 after so many years (especially gosia who got the idea) " +
                     pause() +
                     "and to: basia, jarek and helenka!!! " +
                     pause() +
                     "batman! and jeroen!     " + 
-                    "and whole commodore 64 community! including commodore 64 & 128 fb group" +
+                    "and whole commodore 64 community! including commodore 64/128 fb group" +
                     longPause() +
                     "i have coded this intro in 2 hours and i'm actually quite surprised how smoothly it went. " + 
                     "it was mostly due to the fact, that i copied & pasted my example intro from copper64 and just made new logo plus added some color switches. " +
