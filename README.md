@@ -10,13 +10,16 @@ This intro is released in form of PRG file that can be either launched using C64
 
 ## how to compile
 
-This intro is written with KickAssembler and can be compiled with KA version 5.0. It requires, however, a few libraries to be checked out into libdir:
+This intro is written with KickAssembler and can be compiled with KA version 5.0. It requires, however, a few libraries to be checked out into `<lib-dir>`:
 * https://github.com/c64lib/common
 * https://github.com/c64lib/chipset
 * https://github.com/c64lib/text
 * https://github.com/c64lib/copper64
 
-Assuming that libraries are checked out on the same level as bluevessel repository, demo can be compiled in following way:
+The intro can be compiled in following way:
 ```
-java -jar KickAss.jar -libdir ... bluevessel.asm
+java -jar <path-to-ka>/KickAss.jar -libdir <lib-dir> bluevessel.asm
 ```
+Put path to the place where you keep your Kick Assembler installation as `<path-to-ka>` and directory where you have cloned library repositiories as `<lib-dir>`.
+
+Alternatively, you can always download PRG file from GitHub releases location: 
