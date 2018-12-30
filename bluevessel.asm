@@ -8,7 +8,7 @@
  * GIT repo:  https://github.com/maciejmalecki/bluevessel
  */
  
-//#define VISUAL_DEBUG
+#define VISUAL_DEBUG
 #define IRQH_BG_RASTER_BAR
 #define IRQH_HSCROLL
 #define IRQH_JSR
@@ -43,7 +43,7 @@
 
 .label SCREEN_PTR = 1024
 
-.label LOGO_POSITION = 1
+.label LOGO_POSITION = 2
 .label LOGO_LINE = LOGO_POSITION * 8 + $33 - 4
 .label TECH_TECH_WIDTH = 9*8
 .label COLOR_SWITCH_1 = LOGO_LINE + TECH_TECH_WIDTH + 15
@@ -58,8 +58,6 @@
 .label SCROLL_COLOR_BARS_LINE = SCROLL_POSITION * 8 + $33 - 2
 .label SCROLL_HSCROLL_LINE_START = SCROLL_COLOR_BARS_LINE - 5 
 .label SCROLL_HSCROLL_LINE_END = SCROLL_HSCROLL_LINE_START + 10 + 8 
-
-.label COLOR_SWITCH_4 = 300
 
 .label COPYRIGHT_COLOR = LIGHT_BLUE
 .label COPYRIGHT_POSITION = 24
@@ -190,11 +188,11 @@ initScreen:
     
     // -- copyright --
     pushParamW(copyrightText)
-    pushParamW(SCREEN_PTR + getTextOffset(27, COPYRIGHT_POSITION))
+    pushParamW(SCREEN_PTR + getTextOffset(1, COPYRIGHT_POSITION))
     jsr outText
     
-    pushParamW(COLOR_RAM + getTextOffset(27, COPYRIGHT_POSITION))
-    ldx #12
+    pushParamW(COLOR_RAM + getTextOffset(1, COPYRIGHT_POSITION))
+    ldx #38
     lda #COPYRIGHT_COLOR
     jsr fillMem
     
@@ -264,6 +262,8 @@ doCycleAndTechTech: {
   ldx #(TECH_TECH_WIDTH-1)
   jsr rotateMemRight
   
+  // c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
+  
   // font effects via raster bars
   inc CYCLE_CNTR
   lda CYCLE_CNTR
@@ -277,6 +277,9 @@ doCycle:
   pushParamW(colorCycleDef + 1)
   ldx #6
   jsr rotateMemRight
+  
+  // c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
+  
   debugBorderEnd()
   rts
 }
@@ -286,8 +289,9 @@ endOfCode:
 // ----- or, we also call custom IRQ handlers here such as doScroll, doCycleAndTechTech, etc. ------
 .align $100
 copperList:
-            copperEntry(0,                            c64lib.IRQH_JSR,              <doScroll, >doScroll)
-            copperEntry(24,                           c64lib.IRQH_JSR,              <doCycleAndTechTech, >doCycleAndTechTech)
+            copperEntry(0,                            c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperEntry(4,                            c64lib.IRQH_JSR,              <playMusic, >playMusic)
+            copperEntry(40,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
             copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
             copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
             copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
@@ -297,8 +301,7 @@ copperList:
   hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
             copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
             copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
-            copperEntry(257,                          c64lib.IRQH_JSR,              <playMusic, >playMusic)
-            copperEntry(COLOR_SWITCH_4,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <doCycleAndTechTech, >doCycleAndTechTech)
             copperLoop()
 endOfCopper:
 
@@ -324,7 +327,7 @@ endOfLibs:
 
 // variables
 beginOfVars:
-copyrightText: .text "(c) 2018 npe"; .byte $ff
+copyrightText: .text "ntsc friendly             (c) 2018 npe"; .byte $ff
 scrollText:     incText(
                     pause() +
                     "hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine! " +
