@@ -7,7 +7,7 @@ script:
   - cpm chipset https://github.com/c64lib/chipset/archive/master.tar.gz 
   - cpm text https://github.com/c64lib/text/archive/master.tar.gz 
   - cpm copper64 https://github.com/c64lib/copper64/archive/master.tar.gz 
-  - kall .
+  - ka -define C64LIB_SPEED_CODE bluevessel.asm
 notifications:
   email:
     on_success: change

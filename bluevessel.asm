@@ -8,7 +8,7 @@
  * GIT repo:  https://github.com/maciejmalecki/bluevessel
  */
  
-#define VISUAL_DEBUG
+//#define VISUAL_DEBUG
 #define IRQH_BG_RASTER_BAR
 #define IRQH_HSCROLL
 #define IRQH_JSR
@@ -61,6 +61,8 @@
 
 .label COPYRIGHT_COLOR = LIGHT_BLUE
 .label COPYRIGHT_POSITION = 24
+
+.label TECH_TECH_PROC_PTR = $4000
 
 // Jeroen Tel granted me a permission to use his tune in this intro. I'm a bad musician myself :-(
 .var music = LoadSid("Noisy_Pillars_tune_1.sid")
@@ -118,6 +120,15 @@ block:
 
 // Does relocation of code into target position (music data & player).
 unpack: {
+  // relocate tech tech proc
+  pushParamW(doCycleAndTechTech)
+  pushParamW(TECH_TECH_PROC_PTR)
+  pushParamW(endCycleAndTechTech - doCycleAndTechTech)
+  jsr copyLargeMemForward
+
+  // relocate music
+  .print "Music location: $" + toHexString(music.location, 4) + ", music size: " + music.size + " bytes."
+
   pushParamW(musicData)
   pushParamW(music.location)
   pushParamW(music.size)
@@ -254,35 +265,6 @@ fineScroll:
   rts
 }
 
-doCycleAndTechTech: {
-  debugBorderStart()
-  
-  // tech tech
-  pushParamW(hscrollMapDef)
-  ldx #(TECH_TECH_WIDTH-1)
-  jsr rotateMemRight
-  
-  // c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
-  
-  // font effects via raster bars
-  inc CYCLE_CNTR
-  lda CYCLE_CNTR
-  cmp #4
-  beq doCycle
-  debugBorderEnd()
-  rts
-doCycle:
-  lda #0
-  sta CYCLE_CNTR
-  pushParamW(colorCycleDef + 1)
-  ldx #6
-  jsr rotateMemRight
-  
-  // c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
-  
-  debugBorderEnd()
-  rts
-}
 endOfCode:
 
 // ----- "copper" list, here we define which effects should be executed at which raster line  ------
@@ -301,7 +283,7 @@ copperList:
   hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
             copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
             copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
-            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <doCycleAndTechTech, >doCycleAndTechTech)
+            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
             copperLoop()
 endOfCopper:
 
@@ -388,6 +370,43 @@ musicData:
 .fill music.size, music.getData(i)
 endOfMusic:
 
+doCycleAndTechTech: {
+  debugBorderStart()
+  
+  // tech tech
+  #if C64LIB_SPEED_CODE
+    c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
+  #else
+    pushParamW(hscrollMapDef)
+    ldx #(TECH_TECH_WIDTH-1)
+    jsr rotateMemRight
+  #endif
+  
+  
+  // font effects via raster bars
+  inc CYCLE_CNTR
+  lda CYCLE_CNTR
+  cmp #4
+  beq doCycle
+  debugBorderEnd()
+  rts
+doCycle:
+  lda #0
+  sta CYCLE_CNTR
+  
+  #if C64LIB_SPEED_CODE
+    c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
+  #else
+    pushParamW(colorCycleDef + 1)
+    ldx #6
+    jsr rotateMemRight
+  #endif
+  
+  debugBorderEnd()
+  rts
+}
+endCycleAndTechTech:
+
 endOfProg:
 
 .print "=== MEMORY MAP SUMMARY ==="
@@ -401,6 +420,7 @@ endOfProg:
 .print " End of vars       = $" + toHexString(endOfVars, 4) + ", Size of vars = " + (endOfVars - beginOfVars)
 .print " Begin of music    = $" + toHexString(musicData, 4)
 .print " End of music      = $" + toHexString(endOfMusic, 4) + ", Size of vars = " + (endOfMusic - musicData)
+.print " Size of tech tech =  " + (endCycleAndTechTech - doCycleAndTechTech)
 
 .print " Size of all       = " + (endOfProg - start)
 .print "=========================="
