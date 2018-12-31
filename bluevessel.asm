@@ -43,7 +43,7 @@
 
 .label SCREEN_PTR = 1024
 
-.label LOGO_POSITION = 1
+.label LOGO_POSITION = 2
 .label LOGO_LINE = LOGO_POSITION * 8 + $33 - 4
 .label TECH_TECH_WIDTH = 9*8
 .label COLOR_SWITCH_1 = LOGO_LINE + TECH_TECH_WIDTH + 15
@@ -59,10 +59,10 @@
 .label SCROLL_HSCROLL_LINE_START = SCROLL_COLOR_BARS_LINE - 5 
 .label SCROLL_HSCROLL_LINE_END = SCROLL_HSCROLL_LINE_START + 10 + 8 
 
-.label COLOR_SWITCH_4 = 300
-
 .label COPYRIGHT_COLOR = LIGHT_BLUE
 .label COPYRIGHT_POSITION = 24
+
+.label TECH_TECH_PROC_PTR = $4000
 
 // Jeroen Tel granted me a permission to use his tune in this intro. I'm a bad musician myself :-(
 .var music = LoadSid("Noisy_Pillars_tune_1.sid")
@@ -120,6 +120,15 @@ block:
 
 // Does relocation of code into target position (music data & player).
 unpack: {
+  // relocate tech tech proc
+  pushParamW(doCycleAndTechTech)
+  pushParamW(TECH_TECH_PROC_PTR)
+  pushParamW(endCycleAndTechTech - doCycleAndTechTech)
+  jsr copyLargeMemForward
+
+  // relocate music
+  .print "Music location: $" + toHexString(music.location, 4) + ", music size: " + music.size + " bytes."
+
   pushParamW(musicData)
   pushParamW(music.location)
   pushParamW(music.size)
@@ -190,11 +199,11 @@ initScreen:
     
     // -- copyright --
     pushParamW(copyrightText)
-    pushParamW(SCREEN_PTR + getTextOffset(27, COPYRIGHT_POSITION))
+    pushParamW(SCREEN_PTR + getTextOffset(1, COPYRIGHT_POSITION))
     jsr outText
     
-    pushParamW(COLOR_RAM + getTextOffset(27, COPYRIGHT_POSITION))
-    ldx #12
+    pushParamW(COLOR_RAM + getTextOffset(1, COPYRIGHT_POSITION))
+    ldx #38
     lda #COPYRIGHT_COLOR
     jsr fillMem
     
@@ -256,38 +265,15 @@ fineScroll:
   rts
 }
 
-doCycleAndTechTech: {
-  debugBorderStart()
-  
-  // tech tech
-  pushParamW(hscrollMapDef)
-  ldx #(TECH_TECH_WIDTH-1)
-  jsr rotateMemRight
-  
-  // font effects via raster bars
-  inc CYCLE_CNTR
-  lda CYCLE_CNTR
-  cmp #4
-  beq doCycle
-  debugBorderEnd()
-  rts
-doCycle:
-  lda #0
-  sta CYCLE_CNTR
-  pushParamW(colorCycleDef + 1)
-  ldx #6
-  jsr rotateMemRight
-  debugBorderEnd()
-  rts
-}
 endOfCode:
 
 // ----- "copper" list, here we define which effects should be executed at which raster line  ------
 // ----- or, we also call custom IRQ handlers here such as doScroll, doCycleAndTechTech, etc. ------
 .align $100
 copperList:
-            copperEntry(0,                            c64lib.IRQH_JSR,              <doScroll, >doScroll)
-            copperEntry(24,                           c64lib.IRQH_JSR,              <doCycleAndTechTech, >doCycleAndTechTech)
+            copperEntry(0,                            c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperEntry(4,                            c64lib.IRQH_JSR,              <playMusic, >playMusic)
+            copperEntry(40,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
             copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
             copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
             copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
@@ -297,8 +283,7 @@ copperList:
   hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
             copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
             copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
-            copperEntry(257,                          c64lib.IRQH_JSR,              <playMusic, >playMusic)
-            copperEntry(COLOR_SWITCH_4,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
             copperLoop()
 endOfCopper:
 
@@ -324,7 +309,7 @@ endOfLibs:
 
 // variables
 beginOfVars:
-copyrightText: .text "(c) 2018 npe"; .byte $ff
+copyrightText: .text "ntsc friendly             (c) 2018 npe"; .byte $ff
 scrollText:     incText(
                     pause() +
                     "hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine! " +
@@ -385,6 +370,43 @@ musicData:
 .fill music.size, music.getData(i)
 endOfMusic:
 
+doCycleAndTechTech: {
+  debugBorderStart()
+  
+  // tech tech
+  #if C64LIB_SPEED_CODE
+    c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
+  #else
+    pushParamW(hscrollMapDef)
+    ldx #(TECH_TECH_WIDTH-1)
+    jsr rotateMemRight
+  #endif
+  
+  
+  // font effects via raster bars
+  inc CYCLE_CNTR
+  lda CYCLE_CNTR
+  cmp #4
+  beq doCycle
+  debugBorderEnd()
+  rts
+doCycle:
+  lda #0
+  sta CYCLE_CNTR
+  
+  #if C64LIB_SPEED_CODE
+    c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
+  #else
+    pushParamW(colorCycleDef + 1)
+    ldx #6
+    jsr rotateMemRight
+  #endif
+  
+  debugBorderEnd()
+  rts
+}
+endCycleAndTechTech:
+
 endOfProg:
 
 .print "=== MEMORY MAP SUMMARY ==="
@@ -398,6 +420,7 @@ endOfProg:
 .print " End of vars       = $" + toHexString(endOfVars, 4) + ", Size of vars = " + (endOfVars - beginOfVars)
 .print " Begin of music    = $" + toHexString(musicData, 4)
 .print " End of music      = $" + toHexString(endOfMusic, 4) + ", Size of vars = " + (endOfMusic - musicData)
+.print " Size of tech tech =  " + (endCycleAndTechTech - doCycleAndTechTech)
 
 .print " Size of all       = " + (endOfProg - start)
 .print "=========================="
