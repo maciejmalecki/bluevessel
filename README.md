@@ -91,4 +91,24 @@ So, now enjoy the results:
 
 There are still two problems! The intro does not work with `-ntscold` switch (that is the old version of NTSC, the one with 64 cycles per line). I discovered that the problem is in music routine, I need more time to debug it. Second problem is visible only on WinVice 3.x (older Linux version that I use normally does not show it) - there is half-cycle visual problem at the end of color-switched lines. No surprise, because code is cycled for 63 cycles per line, now run on 65 cycles per line, and some code is just executed too early. This problem can be probably easily solved with different assembling targets (separate binaries for PAL and NTSC), as it just a matter of single `NOP` added somewhere. For elegant, single binary solution - I have to think more. Maybe I will just create a separate handler just for these "difficult" cases such as changing of border and background color at the (almost) same time.
 
+Remodelled copper list:
+```(assembler)
+.align $100
+copperList:
+  topColor: copperEntry(PAL_TOP_RASTER,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperEntry(30,                           c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
+            copperEntry(43,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
+            copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
+            copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
+            copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
+            copperEntry(COLOR_SWITCH_3,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_3, 0)
+            copperEntry(CREDITS_COLOR_BARS_LINE,      c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
+            copperEntry(CREDITS_COLOR_BARS_LINE + 16, c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
+  hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
+            copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
+            copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
+            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <playMusic, >playMusic)
+            copperLoop()
+```
+
 Enjoy the code in [release 1.4.1](https://github.com/maciejmalecki/bluevessel/releases/tag/1.4.1).
