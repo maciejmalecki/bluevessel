@@ -28,7 +28,7 @@ Alternatively, you can always download PRG file from GitHub releases location: h
 
 This intro demonstates few simple but well cycled raster based effects. Writing stable raster interrupt routines is not a big deal but it is rather annoying to code and cycle it separately for each project I'm going to develop, therefore I have written copper64 library that, in the future, will do the job for most common effects you'll need for games, intros or even simple demos.
 
-Sadly, it does not work with NTSC models, but I have idea to hack in support of NTSC into c64lib. This will rather be a separate build target for KickAssembler (so separate binaries will be produced), but still, it will be sufficient to keep NTSC community happy. I don't personally own any NTSC machine but hopefully I don't need any as there is Vice...
+I have managed to handle both PAL and NTSC machines (although currently it works only with 65 cycle models). The whole story is described in last chapter of this README.
 
 Let's look at the screen:
 
@@ -72,3 +72,11 @@ Then there is a very lame scroll procedure with starts with `H-SCROLL` initializ
 We then play music at step (12) and yet another time switch background color (13) so that we have upper screen white and lower screen blue.
 
 There are still plenty of work on https://github.com/c64lib/copper64 and I cannot guarantee its API stability but there are a bit more handlers already available. Go there and see if you're interested.
+
+# short story of NTSC support
+
+Inspired with "NTSC Commodore Users Group for North America/Japan" FB group I was wondering how easy would it be to add support to NTSC models. There were at least two challenges with this: firstly, code of copper64 is carefully cycled so no ugly mid-line effects are visible. Secondly, there are less raster lines available in NTSC which means we will have less cycles to execute the code of the intro per single frame. And I knew that frame is currently packed with code with extra overhead of copper64 it might be difficult to fit everything without any optimization.
+
+So, I took my intro and run on Vice with `-ntsc` parameter set and, no surprise, the code didn't run. It displayed the screen and get stuck. The answer was really trivial - when I looked at my "copper list", some of the last entries were hooked to the raster numbers that simply don't exist on NTSC machines.
+
+I started to shuffle with copper list so that I can fit everything within raster numbers that are legal for both models (that was really easy due to copper64! - you just need to exchange lines on the copper list and play with raster numbers). Then I discovered that I don't have enough time to fit it all in (no surprise, again). Because I wanted to preserve all effects, I started to optimize the code. I wrote optimized, "unlooped" version of memory rotation routine, I also "unlooped" my scrolling routine and it was just it. Now my code worked on both models!
