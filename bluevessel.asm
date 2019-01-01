@@ -17,6 +17,7 @@
 
 #import "chipset/lib/mos6510.asm"
 #import "chipset/lib/vic2.asm"
+#import "chipset/lib/vic2-global.asm"
 #import "chipset/lib/cia.asm"
 #import "text/lib/text.asm"
 #import "text/lib/scroll1x1.asm"
@@ -64,6 +65,9 @@
 
 .label TECH_TECH_PROC_PTR = $4000
 
+.label NTSC_TOP_RASTER = 20
+.label PAL_TOP_RASTER = 6
+
 // Jeroen Tel granted me a permission to use his tune in this intro. I'm a bad musician myself :-(
 .var music = LoadSid("Noisy_Pillars_tune_1.sid")
 
@@ -94,6 +98,7 @@ start:
     // disable CIA as interrupt sources
     disableCIAInterrupts()
   }
+  jsr detectNtsc
   cli
   
   // initialize internal data structures  
@@ -117,6 +122,17 @@ block:
   
 
 // ----- initalization routines ------
+
+// does extra configuration for NTSC mode
+configureNtsc: {
+  lda #NTSC_TOP_RASTER
+  sta topColor + 1
+  rts
+}
+detectNtsc: {
+  c64lib_detectNtsc(0, configureNtsc)
+  rts
+}
 
 // Does relocation of code into target position (music data & player).
 unpack: {
@@ -271,7 +287,7 @@ endOfCode:
 // ----- or, we also call custom IRQ handlers here such as doScroll, doCycleAndTechTech, etc. ------
 .align $100
 copperList:
-            copperEntry(26,                           c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+  topColor: copperEntry(PAL_TOP_RASTER,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
             copperEntry(30,                           c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
             copperEntry(43,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
             copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
