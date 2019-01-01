@@ -271,9 +271,9 @@ endOfCode:
 // ----- or, we also call custom IRQ handlers here such as doScroll, doCycleAndTechTech, etc. ------
 .align $100
 copperList:
-            copperEntry(0,                            c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
-            copperEntry(4,                            c64lib.IRQH_JSR,              <playMusic, >playMusic)
-            copperEntry(40,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
+            copperEntry(26,                           c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            copperEntry(30,                           c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
+            copperEntry(43,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
             copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
             copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
             copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
@@ -283,7 +283,7 @@ copperList:
   hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
             copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
             copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
-            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
+            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <playMusic, >playMusic)
             copperLoop()
 endOfCopper:
 
