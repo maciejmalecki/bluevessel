@@ -203,13 +203,15 @@ initScreen:
     and #neg(CONTROL_2_CSEL)
     sta CONTROL_2
     
-    pushParamW(COLOR_RAM + getTextOffset(0, SCROLL_POSITION))
-    ldx #(1*40)
+    // I made a hack to find some undiscovered problem in raster bar handler
+    // that's why I fill two lines (one extra before) instead of just one
+    pushParamW(COLOR_RAM + getTextOffset(0, SCROLL_POSITION - 1))
+    ldx #(2*40)
     lda #COLOR_3
     jsr fillMem
     
-    pushParamW(SCREEN_PTR + getTextOffset(0, SCROLL_POSITION))
-    ldx #(1*40)
+    pushParamW(SCREEN_PTR + getTextOffset(0, SCROLL_POSITION - 1))
+    ldx #(2*40)
     lda #($20+128)
     jsr fillMem
     
@@ -315,8 +317,6 @@ beginOfLibs:
                 #import "text/lib/sub/out-text.asm"
   fillMem:
                 #import "common/lib/sub/fill-mem.asm"
-  rotateMemRight: 
-                #import "common/lib/sub/rotate-mem-right.asm"
   fillScreen:
                 #import "common/lib/sub/fill-screen.asm"
   copyLargeMemForward: 
@@ -390,13 +390,7 @@ doCycleAndTechTech: {
   debugBorderStart()
   
   // tech tech
-  #if C64LIB_SPEED_CODE
-    c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
-  #else
-    pushParamW(hscrollMapDef)
-    ldx #(TECH_TECH_WIDTH-1)
-    jsr rotateMemRight
-  #endif
+  c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
   
   
   // font effects via raster bars
@@ -410,13 +404,7 @@ doCycle:
   lda #0
   sta CYCLE_CNTR
   
-  #if C64LIB_SPEED_CODE
-    c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
-  #else
-    pushParamW(colorCycleDef + 1)
-    ldx #6
-    jsr rotateMemRight
-  #endif
+  c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
   
   debugBorderEnd()
   rts
