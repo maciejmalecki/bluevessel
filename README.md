@@ -81,7 +81,7 @@ So, I took my intro and run on Vice with `-ntsc` parameter set and, no surprise,
 
 I started to shuffle with copper list so that I can fit everything within raster numbers that are legal for both models (that was really easy due to copper64! - you just need to exchange lines on the copper list and play with raster numbers). Then I discovered that I don't have enough time to fit it all in (no surprise, again). Because I wanted to preserve all effects, I started to optimize the code. I wrote optimized, "unlooped" version of memory rotation routine, I also "unlooped" my scrolling routine and it was just it. Now my code worked on both models!
 
-There were still two issues left. First I discovered that 0-eth raster line on NTSC model is located on the bottom of the screen. Even worse, it is located in visible area, not in V-BLANK section of the display time. This was a problem, because I wanted my intro to have top halve of the screen being white and bottom part being blue. As a solution I had to use NTSC detection code (taken from J0X code, see [here](http://codebase64.org/doku.php?id=base:detect_pal_ntsc)) and dynamically change raster line of the first color switch right in the copper list.
+There were, however, still two issues left. First I discovered that 0-eth raster line on NTSC model is located on the bottom of the screen. Even worse, it is located in visible area, not in V-BLANK section of the display time. This was a problem, because I wanted my intro to have top halve of the screen being white and bottom part being blue. As a solution I had to use NTSC detection code (taken from J0X code, see [here](http://codebase64.org/doku.php?id=base:detect_pal_ntsc)) and dynamically change raster line of the first color switch right in the copper list.
 
 Second issue is probably related to the fault in my color raster bar routine that I managed to quickly mask so it does not show up (I will correct that later).
 
@@ -89,9 +89,9 @@ So, now enjoy the results:
 
 ![BlueVessel NTSC](bluevessel-ntsc.png)
 
-There are still two more problems! The intro does not work with `-ntscold` switch (that is the old version of NTSC, the one with 64 cycles per line). I discovered that the problem is in music routine, I need more time to debug it. Second problem is visible only on WinVice 3.x (older Linux version that I use normally does not show it) - there is half-cycle visual problem at the end of color-switched lines. No surprise, because code is cycled for 63 cycles per line, now run on 65 cycles per line, and some code is just executed too early. This problem can be probably easily solved with different assembling targets (separate binaries for PAL and NTSC), as it just a matter of single `NOP` added somewhere. For elegant, single binary solution - I have to think more. Maybe I will just create a separate handler just for these "difficult" cases such as changing of border and background color at the (almost) same time.
+Well, it's still not perfect, though. The intro does not work with `-ntscold` switch (that is the old version of NTSC, the one with 64 cycles per line). I discovered that the problem is in music routine, I need more time to debug it. Second quirk is visible only on WinVice 3.x (older Linux version that I use normally does not show it) - there is half-cycle visual problem at the end of color-switched lines. No surprise, because code is cycled for 63 cycles per line, now run on 65 cycles per line, and some code is just executed too early. This problem can be probably easily solved with different assembling targets (separate binaries for PAL and NTSC), as it just a matter of single `NOP` added somewhere. For elegant, single binary solution - I have to think more. Maybe I will just create a separate handler just for these "difficult" cases such as changing of border and background color at the (almost) same time.
 
-Remodelled copper list:
+Remodeled copper list:
 ```(assembler)
 .align $100
 copperList:
