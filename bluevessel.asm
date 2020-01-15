@@ -10,21 +10,15 @@
  
 //#define VISUAL_DEBUG
 #define C64LIB_SPEED_CODE
-#define IRQH_BG_RASTER_BAR
-#define IRQH_HSCROLL
-#define IRQH_JSR
-#define IRQH_HSCROLL_MAP
-#define IRQH_BORDER_BG_0_COL
-
 #import "chipset/lib/mos6510.asm"
 #import "chipset/lib/vic2.asm"
 #import "chipset/lib/vic2-global.asm"
 #import "chipset/lib/cia.asm"
-#import "text/lib/text.asm"
-#import "text/lib/scroll1x1.asm"
+#import "text/lib/text-global.asm"
+#import "text/lib/scroll1x1-global.asm"
 #import "common/lib/mem-global.asm"
 #import "common/lib/invoke-global.asm"
-#import "copper64/lib/copper64.asm"
+#import "copper64/lib/copper64-global.asm"
 
 // zero page addresses
 .label DISPLAY_LIST_PTR_LO = $02
@@ -138,17 +132,17 @@ detectNtsc: {
 // Does relocation of code into target position (music data & player).
 unpack: {
   // relocate tech tech proc
-  pushParamW(doCycleAndTechTech)
-  pushParamW(TECH_TECH_PROC_PTR)
-  pushParamW(endCycleAndTechTech - doCycleAndTechTech)
+  c64lib_pushParamW(doCycleAndTechTech)
+  c64lib_pushParamW(TECH_TECH_PROC_PTR)
+  c64lib_pushParamW(endCycleAndTechTech - doCycleAndTechTech)
   jsr copyLargeMemForward
 
   // relocate music
   .print "Music location: $" + toHexString(music.location, 4) + ", music size: " + music.size + " bytes."
 
-  pushParamW(musicData)
-  pushParamW(music.location)
-  pushParamW(music.size)
+  c64lib_pushParamW(musicData)
+  c64lib_pushParamW(music.location)
+  c64lib_pushParamW(music.size)
   jsr copyLargeMemForward
   rts
 }
@@ -157,42 +151,42 @@ initScreen:
   .namespace c64lib {
   
     // -- clear screen --
-    pushParamW(SCREEN_PTR)
+    c64lib_pushParamW(SCREEN_PTR)
     lda #($20)
     jsr fillScreen
-    pushParamW(COLOR_RAM)
+    c64lib_pushParamW(COLOR_RAM)
     lda #COLOR_4
     jsr fillScreen
     
     // -- tech tech logo --
-    pushParamW(vesselData1)
-    pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION))
+    c64lib_pushParamW(vesselData1)
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION))
     jsr outText
-    pushParamW(vesselData2)
-    pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION + 5))
+    c64lib_pushParamW(vesselData2)
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(0, LOGO_POSITION + 5))
     jsr outText
     
-    pushParamW(vesselColors1)
-    pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION))
+    c64lib_pushParamW(vesselColors1)
+    c64lib_pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION))
     jsr outText
-    pushParamW(vesselColors2)
-    pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION + 5))
+    c64lib_pushParamW(vesselColors2)
+    c64lib_pushParamW(COLOR_RAM + getTextOffset(0, LOGO_POSITION + 5))
     jsr outText
     
     // -- credits --
-    pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION - 1))
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION - 1))
     ldx #(3*40)
     lda #($20+128)
     jsr fillMem
     
-    pushParamW(creditsText1)
-    pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION))
+    c64lib_pushParamW(creditsText1)
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION))
     jsr outText
-    pushParamW(creditsText2)
-    pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION + 2))
+    c64lib_pushParamW(creditsText2)
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(0, CREDITS_POSITION + 2))
     jsr outText
 
-    pushParamW(COLOR_RAM + getTextOffset(0, CREDITS_POSITION - 1))
+    c64lib_pushParamW(COLOR_RAM + getTextOffset(0, CREDITS_POSITION - 1))
     ldx #(4*40)
     lda #COLOR_3
     jsr fillMem
@@ -206,22 +200,22 @@ initScreen:
     
     // I made a hack to find some undiscovered problem in raster bar handler
     // that's why I fill two lines (one extra before) instead of just one
-    pushParamW(COLOR_RAM + getTextOffset(0, SCROLL_POSITION - 1))
+    c64lib_pushParamW(COLOR_RAM + getTextOffset(0, SCROLL_POSITION - 1))
     ldx #(2*40)
     lda #COLOR_3
     jsr fillMem
     
-    pushParamW(SCREEN_PTR + getTextOffset(0, SCROLL_POSITION - 1))
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(0, SCROLL_POSITION - 1))
     ldx #(2*40)
     lda #($20+128)
     jsr fillMem
     
     // -- copyright --
-    pushParamW(copyrightText)
-    pushParamW(SCREEN_PTR + getTextOffset(1, COPYRIGHT_POSITION))
+    c64lib_pushParamW(copyrightText)
+    c64lib_pushParamW(SCREEN_PTR + getTextOffset(1, COPYRIGHT_POSITION))
     jsr outText
     
-    pushParamW(COLOR_RAM + getTextOffset(1, COPYRIGHT_POSITION))
+    c64lib_pushParamW(COLOR_RAM + getTextOffset(1, COPYRIGHT_POSITION))
     ldx #38
     lda #COPYRIGHT_COLOR
     jsr fillMem
@@ -254,25 +248,25 @@ initSound: {
 
 // Music player step to be executed at given free raster line.
 playMusic: {
-  debugBorderStart()
+  c64lib_debugBorderStart()
   jsr music.play
-  debugBorderEnd()
+  c64lib_debugBorderEnd()
   rts
 }
 
 // Handles scroll to be executed at given free raster line.
 doScroll: {
-  debugBorderStart()
+  c64lib_debugBorderStart()
   lda SCROLL_OFFSET
   cmp #$00
   bne decOffset
   lda #7
   sta SCROLL_OFFSET
-  pushParamW(SCREEN_PTR + SCROLL_POSITION_OFFSET)
-  pushParamW(scrollText)
-  pushParamWInd(scrollPtr)
+  c64lib_pushParamW(SCREEN_PTR + SCROLL_POSITION_OFFSET)
+  c64lib_pushParamW(scrollText)
+  c64lib_pushParamWInd(scrollPtr)
   jsr scroll
-  pullParamW(scrollPtr)
+  c64lib_pullParamW(scrollPtr)
   jmp fineScroll
 decOffset:
   sbc #1
@@ -280,7 +274,7 @@ decOffset:
 fineScroll:
   lda SCROLL_OFFSET
   sta hscroll + 2
-  debugBorderEnd()
+  c64lib_debugBorderEnd()
   rts
 }
 
@@ -290,28 +284,31 @@ endOfCode:
 // ----- or, we also call custom IRQ handlers here such as doScroll, doCycleAndTechTech, etc. ------
 .align $100
 copperList:
-  topColor: copperEntry(PAL_TOP_RASTER,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
-            copperEntry(30,                           c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
-            copperEntry(43,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
-            copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
-            copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
-            copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
-            copperEntry(COLOR_SWITCH_3,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_3, 0)
-            copperEntry(CREDITS_COLOR_BARS_LINE,      c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
-            copperEntry(CREDITS_COLOR_BARS_LINE + 16, c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
-  hscroll:  copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
-            copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
-            copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
-            copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <playMusic, >playMusic)
-            copperLoop()
+  topColor: c64lib_copperEntry(PAL_TOP_RASTER,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_4, 0)
+            c64lib_copperEntry(30,                           c64lib.IRQH_JSR,              <TECH_TECH_PROC_PTR, >TECH_TECH_PROC_PTR)
+            c64lib_copperEntry(43,                           c64lib.IRQH_JSR,              <doScroll, >doScroll)
+            c64lib_copperEntry(LOGO_LINE,                    c64lib.IRQH_HSCROLL_MAP,      <hscrollMapDef, >hscrollMapDef)
+            c64lib_copperEntry(COLOR_SWITCH_1,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_1, 0)
+            c64lib_copperEntry(COLOR_SWITCH_2,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_2, 0)
+            c64lib_copperEntry(COLOR_SWITCH_3,               c64lib.IRQH_BORDER_BG_0_COL,  COLOR_3, 0)
+            c64lib_copperEntry(CREDITS_COLOR_BARS_LINE,      c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
+            c64lib_copperEntry(CREDITS_COLOR_BARS_LINE + 16, c64lib.IRQH_BG_RASTER_BAR,    <colorCycleDef, >colorCycleDef)
+  hscroll:  c64lib_copperEntry(SCROLL_HSCROLL_LINE_START,    c64lib.IRQH_HSCROLL,          5, 0)
+            c64lib_copperEntry(SCROLL_COLOR_BARS_LINE,       c64lib.IRQH_BG_RASTER_BAR,    <scrollBarDef, >scrollBarDef)
+            c64lib_copperEntry(SCROLL_HSCROLL_LINE_END,      c64lib.IRQH_HSCROLL,          0, 0)
+            c64lib_copperEntry(SCROLL_HSCROLL_LINE_END + 3,  c64lib.IRQH_JSR,              <playMusic, >playMusic)
+            c64lib_copperLoop()
 endOfCopper:
 
 // ----- library hosted functions (here we execute macros that "install" subroutine or just import their code there) -----
 beginOfLibs:
 
   // here we configure subroutines that requies zero page location, calling KA macros configure and install them
-  startCopper:    .namespace c64lib { _startCopper(DISPLAY_LIST_PTR_LO, LIST_PTR) }
-  scroll:         .namespace c64lib { _scroll1x1(SCROLL_TEMP) }
+  startCopper:    .namespace c64lib { c64lib_startCopper(
+                                        DISPLAY_LIST_PTR_LO, 
+                                        LIST_PTR, 
+                                        List().add(c64lib.IRQH_BG_RASTER_BAR, c64lib.IRQH_HSCROLL, c64lib.IRQH_JSR, c64lib.IRQH_HSCROLL_MAP, c64lib.IRQH_BORDER_BG_0_COL).lock()) }
+  scroll:         .namespace c64lib { c64lib_scroll1x1(SCROLL_TEMP) }
 
   // here we just import code of subroutines which do not require any further configuration
   outText:         
@@ -327,7 +324,7 @@ endOfLibs:
 // variables
 beginOfVars:
 copyrightText: .text "ntsc friendly             (c) 2018 npe"; .byte $ff
-scrollText:     incText(
+scrollText:     c64lib_incText(
                     pause() +
                     "hallo krzychu! ich gruesse dich und wuensche dich viel spass mit deine neue c64c mit 250466 platine! " +
                     pause() +
@@ -352,8 +349,8 @@ scrollText:     incText(
                     longPause(),
                     128) 
                 .byte $ff
-creditsText1:   incText("         coded by  herr architekt      ", 128); .byte $ff
-creditsText2:   incText("         music by  jeroen tel          ", 128); .byte $ff                
+creditsText1:   c64lib_incText("         coded by  herr architekt      ", 128); .byte $ff
+creditsText2:   c64lib_incText("         music by  jeroen tel          ", 128); .byte $ff                
 vesselData1:    .byte $20,$20,$55,$49,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$42,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20
                 .byte $20,$20,$4A,$4B,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$72,$5B,$72,$20,$20,$20,$20,$20,$20,$20,$20,$20
                 .byte $20,$20,$50,$4F,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$42,$42,$5D,$76,$77,$77,$77,$77,$A0,$20,$20,$20
@@ -388,7 +385,7 @@ musicData:
 endOfMusic:
 
 doCycleAndTechTech: {
-  debugBorderStart()
+  c64lib_debugBorderStart()
   
   // tech tech
   c64lib_rotateMemRightFast(hscrollMapDef, TECH_TECH_WIDTH - 1)
@@ -399,7 +396,7 @@ doCycleAndTechTech: {
   lda CYCLE_CNTR
   cmp #4
   beq doCycle
-  debugBorderEnd()
+  c64lib_debugBorderEnd()
   rts
 doCycle:
   lda #0
@@ -407,7 +404,7 @@ doCycle:
   
   c64lib_rotateMemRightFast(colorCycleDef + 1, 6)
   
-  debugBorderEnd()
+  c64lib_debugBorderEnd()
   rts
 }
 endCycleAndTechTech:
