@@ -9,6 +9,7 @@
  */
  
 //#define VISUAL_DEBUG
+#define C64LIB_SPEED_CODE
 #define IRQH_BG_RASTER_BAR
 #define IRQH_HSCROLL
 #define IRQH_JSR
