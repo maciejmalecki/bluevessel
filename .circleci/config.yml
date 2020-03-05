@@ -43,7 +43,6 @@ workflows:
                     branches:
                         only:
                             - master
-                            - develop
                     tags:
                         only:
                             - /^\d\d\d\d\.\d\d\.\d\d$/
@@ -52,7 +51,6 @@ workflows:
                     branches:
                         ignore:
                             - master
-                            - develop
                     tags:
                         only:
                             - /^\d\d\d\d\.\d\d\.\d\d$/
